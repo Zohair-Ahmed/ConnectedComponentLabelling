@@ -23,6 +23,8 @@ eecs user id: zohair99
 #include <stdlib.h>
 #define IMAGE_SIZE 10
 
+/*----------GLOBAL VARIABLES----------*/
+
 /**
  * Parallel array, for each of the direction vectors
  * 
@@ -34,15 +36,25 @@ eecs user id: zohair99
 int xDir[8] = {-1, 0, 1, 1, 1, 0, -1, -1};
 int yDir[8] = {1, 1, 1, 0, -1, -1, -1, 0};
 
-int componentLabel;
-
 /**
- * This array is currently all 0's.
- * When colour is called, the 0's will change into the respecitve label,
- * depending on the number of connected components. Then the original array,
- * will copy this array.
+ * This array is the equivalent to the input array but with connected 
+ * components. This array is currently all 0's.
+ * When color function is called, the 0's will change into the respecitve 
+ * label, depending on the number of connected components. Then the 
+ * original array, will copy this array.
  */
 int connected[IMAGE_SIZE][IMAGE_SIZE] = {0};
+
+/**
+ * The label that holds the number of connected components
+ */
+int componentLabel;
+int numOfComponentLabels;
+
+/*--------------FUNCTIONS--------------*/
+
+/*--DECLARATIONS--*/
+void connect(int x, int y, int componentLabel, int image[IMAGE_SIZE][IMAGE_SIZE]);
 
 // this function prints the array
 void printImgArray(int array[IMAGE_SIZE][IMAGE_SIZE])
@@ -65,50 +77,23 @@ void printImgArray(int array[IMAGE_SIZE][IMAGE_SIZE])
  *
  * feel free to add auxiliary data structures and helper functions
  **/
-
 int cellCount(int image[IMAGE_SIZE][IMAGE_SIZE])
 {
-    // insert your code for task1.2 here
+    // insert your code for task 1.2 here
     // you may want to change the return value.
-    return componentLabel;
-}
-
-/**
- * A helper method that checks the current coordinate's
- * neighbours, and than decides the connected component value 
- * based off the neighbours
- */
-static void connect(int x, int y, int componentLabel, int image[IMAGE_SIZE][IMAGE_SIZE])
-{
 
     /**
-     *  Checks if the surround coordinates of the current index 
-     *  is out of bounds. For example, will not compute the North,
-     *  West, North West, and North East coordinates of the first 
-     *  index of the array because they do not exist
+     * IMPORTANT ASSUMPTION:
+     * 
+     * The image parameter is already labelled. This was said
+     * in the instructions for task 1.2.
+     * This is why the componentLabel and numOfComponentLabels 
+     * variable is global.
+     * It is also why I labelled the image starting from 1, 
+     * it would be easiest to return this value.
      */
-    if (x < 0 || x == IMAGE_SIZE)
-        return;
-    if (y < 0 || y == IMAGE_SIZE)
-        return;
 
-    // mark the current index in the copy array
-    connected[x][y] = componentLabel;
-
-    // recursively check the surrounding coordinates
-    int d;
-    for (d = 0; d < 8; ++d)
-    {
-
-        // since the direction arrays are parallel, this is possible
-        int aroundX = x + xDir[d];
-        int aroundY = y + yDir[d];
-
-        // if the respective neighbour in the original array is labelled
-        // the same neighbour is not labelled in the copy array
-        if (image[aroundX][aroundY] && !connected[aroundX][aroundY])
-            connect(aroundX, aroundY, componentLabel, image);
-    }
+    return numOfComponentLabels;
 }
 
 /**
@@ -150,14 +135,14 @@ void color(int image[IMAGE_SIZE][IMAGE_SIZE])
 }
 
 /********************************************************************************/
-//the function and all the helper functions (if any) should use pointer notation,
+// the function and all the helper functions (if any) should use pointer notation,
 // instead of array index notation []. It is okey to use [] only when declaring extra arrays
 void colorPtr(int *image)
 {
     // insert your code for task 2.1 here
 }
 
-//the function and all the helper functions (if any) should use pointer notation,
+// the function and all the helper functions (if any) should use pointer notation,
 // instead of array index notation []. It is okey to use [] only when declaring extra arrays
 int cellCountPtr(int *image)
 {
@@ -171,11 +156,74 @@ int cellCountPtr(int *image)
  * This function colors each cell with a unique color
  * (i.e., unique number).
  **/
-
 int colorRecursively(int image[IMAGE_SIZE][IMAGE_SIZE])
 {
+    componentLabel = 0; // component labelling
 
+    int i, j;
+    for (i = 0; i < IMAGE_SIZE; i++)
+    {
+        for (j = 0; j < IMAGE_SIZE; j++)
+        {
+            /**
+	         * Check ever value in the original array,
+	         * if the original array has a non-zero, and the copy array
+	         * at the same position has a 0, turn that position in 
+	         * the array to the value in the original array
+	         */
+            if (image[i][j] && !connected[i][j])
+                connect(i, j, ++componentLabel, image);
+        }
+    }
+
+    // make the original array, into the labelled array
+    int m, n;
+    for (m = 0; m < IMAGE_SIZE; m++)
+    {
+        for (n = 0; n < IMAGE_SIZE; n++)
+            image[m][n] = connected[m][n];
+    }
+    
     return 0;
+}
+
+/**
+ * A helper method that checks the current coordinate's
+ * neighbours, and than decides the connected component value 
+ * based off the neighbours
+ */
+void connect(int x, int y, int componentLabel, int image[IMAGE_SIZE][IMAGE_SIZE])
+{
+
+    /**
+     *  Checks if the surround coordinates of the current index 
+     *  is out of bounds. For example, will not compute the North,
+     *  West, North West, and North East coordinates of the first 
+     *  index of the array because they do not exist
+     */
+    if (x < 0 || x > IMAGE_SIZE - 1)
+        return;
+    if (y < 0 || y > IMAGE_SIZE - 1)
+        return;
+
+    // mark the current index in the copy array
+    connected[x][y] = componentLabel;
+    numOfComponentLabels = componentLabel;
+
+    // recursively check the surrounding coordinates
+    int d;
+    for (d = 0; d < 8; ++d)
+    {
+
+        // since the direction arrays are parallel, this is possible
+        int aroundX = x + xDir[d];
+        int aroundY = y + yDir[d];
+
+        // if the respective neighbour in the original array is labelled
+        // the same neighbour is not labelled in the copy array
+        if (image[aroundX][aroundY] && !connected[aroundX][aroundY])
+            connect(aroundX, aroundY, componentLabel, image);
+    }
 }
 
 #ifndef __testing
