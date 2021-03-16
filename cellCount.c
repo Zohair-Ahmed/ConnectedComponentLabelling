@@ -34,6 +34,8 @@ eecs user id: zohair99
 int xDir[8] = {-1, 0, 1, 1, 1, 0, -1, -1};
 int yDir[8] = {1, 1, 1, 0, -1, -1, -1, 0};
 
+int componentLabel;
+
 /**
  * This array is currently all 0's.
  * When colour is called, the 0's will change into the respecitve label,
@@ -68,10 +70,15 @@ int cellCount(int image[IMAGE_SIZE][IMAGE_SIZE])
 {
     // insert your code for task1.2 here
     // you may want to change the return value.
-    return 0;
+    return componentLabel;
 }
 
-void connect(int x, int y, int componentLabel, int image[IMAGE_SIZE][IMAGE_SIZE])
+/**
+ * A helper method that checks the current coordinate's
+ * neighbours, and than decides the connected component value 
+ * based off the neighbours
+ */
+static void connect(int x, int y, int componentLabel, int image[IMAGE_SIZE][IMAGE_SIZE])
 {
 
     /**
@@ -114,7 +121,7 @@ void connect(int x, int y, int componentLabel, int image[IMAGE_SIZE][IMAGE_SIZE]
  **/
 void color(int image[IMAGE_SIZE][IMAGE_SIZE])
 {
-    int componentLabel = 0; // component labelling
+    componentLabel = 0; // component labelling
 
     // insert your code for task 1.1 here
     int i, j;
