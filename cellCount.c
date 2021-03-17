@@ -44,6 +44,7 @@ int yDir[8] = {1, 1, 1, 0, -1, -1, -1, 0};
  * original array, will copy this array.
  */
 int connected[IMAGE_SIZE][IMAGE_SIZE] = {0};
+int connectedR[IMAGE_SIZE][IMAGE_SIZE] = {0};
 
 /**
  * The label that holds the number of connected components
@@ -93,7 +94,8 @@ int cellCount(int image[IMAGE_SIZE][IMAGE_SIZE])
      * it would be easiest to return this value.
      */
 
-    return numOfComponentLabels;
+    //return numOfComponentLabels;
+    return componentLabel;
 }
 
 /**
@@ -114,23 +116,76 @@ void color(int image[IMAGE_SIZE][IMAGE_SIZE])
     {
         for (j = 0; j < IMAGE_SIZE; j++)
         {
-            /**
-	         * Check ever value in the original array,
-	         * if the original array has a non-zero, and the copy array
-	         * at the same position has a 0, turn that position in 
-	         * the array to the value in the original array
-	         */
-            if (image[i][j] && !connected[i][j])
-                connect(i, j, ++componentLabel, image);
+            // if (image[i][j] && !connected[i][j])
+            // {
+            //     connected[i][j] = componentLabel;
+
+            //     int notSurrounded = 0;
+
+            //     int d;
+            //     for (d = 0; d < 8; ++d)
+            //     {
+            //         // since the direction arrays are parallel, this is possible
+            //         int aroundX = i + xDir[d];
+            //         int aroundY = j + yDir[d];
+
+            //         if (aroundX - 1 < 0 || aroundX == IMAGE_SIZE)
+            //             continue;
+            //         if (aroundY - 1 < 0 || aroundY == IMAGE_SIZE)
+            //             continue;
+
+            //         notSurrounded = notSurrounded || image[aroundX][aroundY];
+
+            //         // if the respective neighbour in the original array is labelled
+            //         // the same neighbour is not labelled in the copy array
+            //         if (image[aroundX][aroundY])
+            //             connected[i][j] = connected[aroundX][aroundY];
+            //         else if (d == 7 && notSurrounded == 0)
+            //             connected[i][j] = componentLabel;
+            //     }
+            // }
+
+            // if (image[i][j])
+            // {
+            //     int notSurrounded = 0;
+            //     int d;
+            //     for (d = 0; d < 8; ++d)
+            //     {
+            //         // since the direction arrays are parallel, this is possible
+            //         int aroundX = i + xDir[d];
+            //         int aroundY = j + yDir[d];
+
+            //         if (aroundX == -1 || aroundX == IMAGE_SIZE)
+            //             continue;
+            //         if (aroundY == -1 || aroundY == IMAGE_SIZE )
+            //             continue;
+
+            //         notSurrounded = notSurrounded || connected[aroundX][aroundY];
+
+            //         // if the respective neighbour in the original array is labelled
+            //         // the same neighbour is not labelled in the copy array
+            //         // if (connected[aroundX][aroundY] && notSurrounded)
+            //         //     connected[i][j] = connected[aroundX][aroundY];
+
+            //         if (d == 7 && notSurrounded == 0)
+            //         {
+            //             connected[i][j] = ++componentLabel;
+            //             numOfComponentLabels = componentLabel;
+            //         }
+            //         else if (connected[aroundX][aroundY])
+            //             connected[i][j] = connected[aroundX][aroundY];
+                        
+            //     }
+            // }
         }
     }
 
     // make the original array, into the labelled array
-    int m, n;
+    int m, p;
     for (m = 0; m < IMAGE_SIZE; m++)
     {
-        for (n = 0; n < IMAGE_SIZE; n++)
-            image[m][n] = connected[m][n];
+        for (p = 0; p < IMAGE_SIZE; p++)
+            image[m][p] = connected[m][p];
     }
 }
 
@@ -183,7 +238,7 @@ int colorRecursively(int image[IMAGE_SIZE][IMAGE_SIZE])
         for (n = 0; n < IMAGE_SIZE; n++)
             image[m][n] = connected[m][n];
     }
-    
+
     return 0;
 }
 
