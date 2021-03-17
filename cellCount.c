@@ -49,8 +49,7 @@ int connectedR[IMAGE_SIZE][IMAGE_SIZE] = {0};
 /**
  * The label that holds the number of connected components
  */
-int componentLabel;
-int numOfComponentLabels;
+//int componentLabel;
 
 /*--------------FUNCTIONS--------------*/
 
@@ -82,20 +81,7 @@ int cellCount(int image[IMAGE_SIZE][IMAGE_SIZE])
 {
     // insert your code for task 1.2 here
     // you may want to change the return value.
-
-    /**
-     * IMPORTANT ASSUMPTION:
-     * 
-     * The image parameter is already labelled. This was said
-     * in the instructions for task 1.2.
-     * This is why the componentLabel and numOfComponentLabels 
-     * variable is global.
-     * It is also why I labelled the image starting from 1, 
-     * it would be easiest to return this value.
-     */
-
-    //return numOfComponentLabels;
-    return componentLabel;
+    return 0;
 }
 
 /**
@@ -108,7 +94,7 @@ int cellCount(int image[IMAGE_SIZE][IMAGE_SIZE])
  **/
 void color(int image[IMAGE_SIZE][IMAGE_SIZE])
 {
-    componentLabel = 0; // component labelling
+    int componentLabel = 1; // component labelling
 
     // insert your code for task 1.1 here
     int i, j;
@@ -116,67 +102,35 @@ void color(int image[IMAGE_SIZE][IMAGE_SIZE])
     {
         for (j = 0; j < IMAGE_SIZE; j++)
         {
-            // if (image[i][j] && !connected[i][j])
-            // {
-            //     connected[i][j] = componentLabel;
+            if (image[i][j] && !connected[i][j])
+            {
+                //++componentLabel;
+                
+                int notSurrounded = 0;
+                int d;
+                for (d = 0; d < 8; ++d)
+                {
+                    // since the direction arrays are parallel, this is possible
+                    int aroundX = i + xDir[d];
+                    int aroundY = j + yDir[d];
 
-            //     int notSurrounded = 0;
+                    if (aroundX < 0 || aroundX > IMAGE_SIZE - 1)
+                        continue;
+                    if (aroundY < 0 || aroundY > IMAGE_SIZE - 1)
+                        continue;
 
-            //     int d;
-            //     for (d = 0; d < 8; ++d)
-            //     {
-            //         // since the direction arrays are parallel, this is possible
-            //         int aroundX = i + xDir[d];
-            //         int aroundY = j + yDir[d];
+                    //connected[i][j] = componentLabel;
 
-            //         if (aroundX - 1 < 0 || aroundX == IMAGE_SIZE)
-            //             continue;
-            //         if (aroundY - 1 < 0 || aroundY == IMAGE_SIZE)
-            //             continue;
+                    notSurrounded = notSurrounded || connected[aroundX][aroundY];
 
-            //         notSurrounded = notSurrounded || image[aroundX][aroundY];
-
-            //         // if the respective neighbour in the original array is labelled
-            //         // the same neighbour is not labelled in the copy array
-            //         if (image[aroundX][aroundY])
-            //             connected[i][j] = connected[aroundX][aroundY];
-            //         else if (d == 7 && notSurrounded == 0)
-            //             connected[i][j] = componentLabel;
-            //     }
-            // }
-
-            // if (image[i][j])
-            // {
-            //     int notSurrounded = 0;
-            //     int d;
-            //     for (d = 0; d < 8; ++d)
-            //     {
-            //         // since the direction arrays are parallel, this is possible
-            //         int aroundX = i + xDir[d];
-            //         int aroundY = j + yDir[d];
-
-            //         if (aroundX == -1 || aroundX == IMAGE_SIZE)
-            //             continue;
-            //         if (aroundY == -1 || aroundY == IMAGE_SIZE )
-            //             continue;
-
-            //         notSurrounded = notSurrounded || connected[aroundX][aroundY];
-
-            //         // if the respective neighbour in the original array is labelled
-            //         // the same neighbour is not labelled in the copy array
-            //         // if (connected[aroundX][aroundY] && notSurrounded)
-            //         //     connected[i][j] = connected[aroundX][aroundY];
-
-            //         if (d == 7 && notSurrounded == 0)
-            //         {
-            //             connected[i][j] = ++componentLabel;
-            //             numOfComponentLabels = componentLabel;
-            //         }
-            //         else if (connected[aroundX][aroundY])
-            //             connected[i][j] = connected[aroundX][aroundY];
-                        
-            //     }
-            // }
+                    // if the respective neighbour in the original array is labelled
+                    // the same neighbour is not labelled in the copy array
+                    if (connected[aroundX][aroundY])
+                        connected[i][j] = connected[aroundX][aroundY];
+                    else if (d == 7 && notSurrounded == 0)
+                        connected[i][j] = ++componentLabel;
+                }
+            }
         }
     }
 
@@ -213,7 +167,7 @@ int cellCountPtr(int *image)
  **/
 int colorRecursively(int image[IMAGE_SIZE][IMAGE_SIZE])
 {
-    componentLabel = 0; // component labelling
+    int componentLabel = 0; // component labelling
 
     int i, j;
     for (i = 0; i < IMAGE_SIZE; i++)
@@ -226,7 +180,7 @@ int colorRecursively(int image[IMAGE_SIZE][IMAGE_SIZE])
 	         * at the same position has a 0, turn that position in 
 	         * the array to the value in the original array
 	         */
-            if (image[i][j] && !connected[i][j])
+            if (image[i][j] && !connectedR[i][j])
                 connect(i, j, ++componentLabel, image);
         }
     }
@@ -236,7 +190,7 @@ int colorRecursively(int image[IMAGE_SIZE][IMAGE_SIZE])
     for (m = 0; m < IMAGE_SIZE; m++)
     {
         for (n = 0; n < IMAGE_SIZE; n++)
-            image[m][n] = connected[m][n];
+            image[m][n] = connectedR[m][n];
     }
 
     return 0;
@@ -262,8 +216,7 @@ void connect(int x, int y, int componentLabel, int image[IMAGE_SIZE][IMAGE_SIZE]
         return;
 
     // mark the current index in the copy array
-    connected[x][y] = componentLabel;
-    numOfComponentLabels = componentLabel;
+    connectedR[x][y] = componentLabel;
 
     // recursively check the surrounding coordinates
     int d;
@@ -276,7 +229,7 @@ void connect(int x, int y, int componentLabel, int image[IMAGE_SIZE][IMAGE_SIZE]
 
         // if the respective neighbour in the original array is labelled
         // the same neighbour is not labelled in the copy array
-        if (image[aroundX][aroundY] && !connected[aroundX][aroundY])
+        if (image[aroundX][aroundY] && !connectedR[aroundX][aroundY])
             connect(aroundX, aroundY, componentLabel, image);
     }
 }
