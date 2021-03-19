@@ -28,13 +28,18 @@ eecs user id: zohair99
 /**
  * Parallel array, for each of the direction vectors
  * 
- * (-1, 1) - North East ; (0, 1) - East ; (1, 1) - South East
- * (1, 0) - South ; (1, -1) - South West; (0, -1) - West
- * (-1, -1) - North West - (-1, 0) - North
+ * (0, -1)  - West
+ * (-1, -1) - North West
+ * (-1, 0)  - North
+ * (-1, 1)  - North East
+ * (0, 1)   - East
+ * (1, 1)   - South East
+ * (1, 0)   - South
+ * (1, -1)  - South West
  * 
  */
-int xDir[8] = {-1, 0, 1, 1, 1, 0, -1, -1};
-int yDir[8] = {1, 1, 1, 0, -1, -1, -1, 0};
+int xDir[8] = { 0, -1, -1, -1, 0, 1, 1,  1};
+int yDir[8] = {-1, -1,  0,  1, 1, 1, 0, -1};
 
 /**
  * This array is the equivalent to the input array but with connected 
@@ -42,8 +47,9 @@ int yDir[8] = {1, 1, 1, 0, -1, -1, -1, 0};
  * When color function is called, the 0's will change into the respecitve 
  * label, depending on the number of connected components. Then the 
  * original array, will copy this array.
+ * 
+ * This is global because colorRecursively and its helper method share this array
  */
-int connected[IMAGE_SIZE][IMAGE_SIZE] = {0};
 int connectedR[IMAGE_SIZE][IMAGE_SIZE] = {0};
 
 /**
@@ -94,9 +100,18 @@ int cellCount(int image[IMAGE_SIZE][IMAGE_SIZE])
  **/
 void color(int image[IMAGE_SIZE][IMAGE_SIZE])
 {
-    int componentLabel = 1; // component labelling
-
     // insert your code for task 1.1 here
+
+    /**
+     * This is an array equivalent to the input image
+     * but will have the label connected components
+     */
+    int connected[IMAGE_SIZE][IMAGE_SIZE] = {0};
+
+    int componentLabel = 0; // component labelling
+
+    /*******FIRST PASS**********/
+
     int i, j;
     for (i = 0; i < IMAGE_SIZE; i++)
     {
@@ -104,9 +119,11 @@ void color(int image[IMAGE_SIZE][IMAGE_SIZE])
         {
             if (image[i][j] && !connected[i][j])
             {
-                //++componentLabel;
-                
+                /*boolean statement to check if surrounding 
+                coordinates have already been labelled*/
                 int notSurrounded = 0;
+
+                /*check every direction surrounding to current coordinate*/
                 int d;
                 for (d = 0; d < 8; ++d)
                 {
@@ -114,21 +131,63 @@ void color(int image[IMAGE_SIZE][IMAGE_SIZE])
                     int aroundX = i + xDir[d];
                     int aroundY = j + yDir[d];
 
+                    // if the surrounding coordinate is out of bounds, go to next
+                    // surrounding coordinate
                     if (aroundX < 0 || aroundX > IMAGE_SIZE - 1)
                         continue;
                     if (aroundY < 0 || aroundY > IMAGE_SIZE - 1)
                         continue;
 
-                    //connected[i][j] = componentLabel;
-
+                    // if this is coordinate is in the grid and has a non zero value
+                    // this means this is a labelled component
                     notSurrounded = notSurrounded || connected[aroundX][aroundY];
 
-                    // if the respective neighbour in the original array is labelled
-                    // the same neighbour is not labelled in the copy array
+                    // if the respective neighbour in the labelled array is
+                    // already labelled, let them share the same label
+                    // else if all the neighbours are 0 and the equivalent coordinate
+                    // is labelled, let this component in the labelled array signify
+                    // a new connected component
                     if (connected[aroundX][aroundY])
+                    {
                         connected[i][j] = connected[aroundX][aroundY];
-                    else if (d == 7 && notSurrounded == 0)
+                        d = 7; // get out of loop
+                    }
+                    else if (notSurrounded == 0 && d == 6)
                         connected[i][j] = ++componentLabel;
+                }
+            }
+        }
+    }
+
+    /*******SECOND PASS*********
+     * A second pass is done ensure none of the connected components were missed
+     * Since the input array is read from top right to bottom left, there could
+     * be connected components that do not seem connected in the beginning, but connect
+     * later on in the array
+    */
+    int y, z;
+    for (y = IMAGE_SIZE - 1; y >= 0; y--)
+    {
+        for (z = 0; z < IMAGE_SIZE; z++)
+        {
+            // if this is a non zero component
+            if (connected[y][z])
+            {
+                // check all surrounding neighbours
+                int d;
+                for (d = 0; d < 8; ++d)
+                {
+                    int aroundX = y + xDir[d];
+                    int aroundY = z + yDir[d];
+
+                    if (aroundX < 0 || aroundX > IMAGE_SIZE - 1)
+                        continue;
+                    if (aroundY < 0 || aroundY > IMAGE_SIZE - 1)
+                        continue;
+
+                    // if neighbours are different, change the neighbours to be the same
+                    if (connected[aroundX][aroundY] && (connected[y][z] != connected[aroundX][aroundY]))
+                        connected[aroundX][aroundY] = connected[y][z];
                 }
             }
         }
@@ -197,7 +256,7 @@ int colorRecursively(int image[IMAGE_SIZE][IMAGE_SIZE])
 }
 
 /**
- * A helper method that checks the current coordinate's
+ * A recursive helper method that checks the current coordinate's
  * neighbours, and than decides the connected component value 
  * based off the neighbours
  */
