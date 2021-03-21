@@ -23,7 +23,7 @@ eecs user id: zohair99
 #include <stdlib.h>
 #define IMAGE_SIZE 10
 
-/*----------GLOBAL VARIABLES----------*/
+/*--------------------GLOBAL VARIABLES--------------------*/
 
 /**
  * Parallel array, for each of the direction vectors
@@ -36,36 +36,21 @@ eecs user id: zohair99
  * (1, 1)   - South East
  * (1, 0)   - South
  * (1, -1)  - South West
- * 
- */
-int xDir[8] = { 0, -1, -1, -1, 0, 1, 1,  1};
-int yDir[8] = {-1, -1,  0,  1, 1, 1, 0, -1};
+ **/
+int xDir[8] = {0, -1, -1, -1, 0, 1, 1, 1};
+int yDir[8] = {-1, -1, 0, 1, 1, 1, 0, -1};
+
+/*------------------------FUNCTIONS------------------------*/
 
 /**
- * This array is the equivalent to the input array but with connected 
- * components. This array is currently all 0's.
- * When color function is called, the 0's will change into the respecitve 
- * label, depending on the number of connected components. Then the 
- * original array, will copy this array.
+ * NON-POINTER VERSION
  * 
- * This is global because colorRecursively and its helper method share this array
- */
-int connectedR[IMAGE_SIZE][IMAGE_SIZE] = {0};
-
-/**
- * The label that holds the number of connected components
- */
-//int componentLabel;
-
-/*--------------FUNCTIONS--------------*/
-
-/*--DECLARATIONS--*/
-void connect(int x, int y, int componentLabel, int image[IMAGE_SIZE][IMAGE_SIZE]);
-
-// this function prints the array
+ * This function prints the input array
+ * 
+ * int array[][] - array to be printed
+ **/
 void printImgArray(int array[IMAGE_SIZE][IMAGE_SIZE])
 {
-
     printf("------ Image Contents -------\n");
     int i, j;
     for (i = 0; i < IMAGE_SIZE; i++)
@@ -78,16 +63,91 @@ void printImgArray(int array[IMAGE_SIZE][IMAGE_SIZE])
 }
 
 /**
- * This function counts the number of distinct 
- * number (i.e. the number of cells)
- *
- * feel free to add auxiliary data structures and helper functions
+ * A 'boolean' helper method that calculates if the 
+ * neighbouring coordinate we want to check is in 
+ * the array
+ * 
+ * int x - the neighbouring x coordinate
+ * int y - the neighbouring y coordinate
+ * 
+ * Return 1 if x and y can be located in the grid,
+ * else, return 0 
+ */
+int validCoor(int x, int y)
+{
+    return (x >= 0 && x < IMAGE_SIZE && y >= 0 && y < IMAGE_SIZE);
+}
+
+/**
+ * A helper method that marks all the connected components of a label
+ * If a non zero number in the input array is found, it will recursively 
+ * mark all the neighbours of the component in the visited array. This will
+ * tell us not to increment the count because its component was already 
+ * accounted for
+ * 
+ * int image[][] - the input array
+ * int i - the x coordinate we are checking
+ * int y - the y coordiante we are checking
+ * int visited[][] - the array keeping track of the coordinates that have
+ *                   already been seen/ don't need to check
+ */
+void markNeighbours(int image[IMAGE_SIZE][IMAGE_SIZE], int i, int j, int visited[IMAGE_SIZE][IMAGE_SIZE])
+{
+    if (!validCoor(i, j)) // return this is not a valid coordinate
+        return;
+
+    if (visited[i][j]) // return if we already checked this coordinates connectivity
+        return;
+
+    visited[i][j] = 1; // let this coordinate be marked as seen
+
+    int aroundX; // neighbouring X
+    int aroundY; // neighbouring Y
+
+    // recursively check the surrounding coordinate in all directions
+    int d;
+    for (d = 0; d < 8; ++d)
+    {
+        // since the direction arrays are parallel, this is possible
+        aroundX = i + xDir[d];
+        aroundY = j + yDir[d];
+
+        // if the neighbouring coordinate is valid and that coordinated is labelled in the input array
+        // but not the visited array, mark it in the label array and check that point's neighbours
+        if (validCoor(aroundX, aroundY) && (image[aroundX][aroundY] && !visited[aroundX][aroundY]))
+            markNeighbours(image, aroundX, aroundY, visited);
+    }
+}
+
+/**
+ * Returns the number of distinct cells 
+ * in the given matrix
+ * 
+ * int image[][] - the matrix
+ * 
+ * Assuming, image[][] is already labelled
  **/
 int cellCount(int image[IMAGE_SIZE][IMAGE_SIZE])
 {
-    // insert your code for task 1.2 here
-    // you may want to change the return value.
-    return 0;
+    int count = 0; // the number of distinct cells
+
+    // an array that will hold non zero vales, to ensure we don't increment our count
+    // on an already visited coordinate
+    int visited[IMAGE_SIZE][IMAGE_SIZE] = {0};
+
+    int i, j;
+    for (i = 0; i < IMAGE_SIZE; ++i)
+    {
+        for (j = 0; j < IMAGE_SIZE; ++j)
+        {
+            if (image[i][j] && !visited[i][j])
+            {
+                markNeighbours(image, i, j, visited);
+                ++count;
+            }
+        }
+    }
+    return count;
 }
 
 /**
@@ -100,8 +160,6 @@ int cellCount(int image[IMAGE_SIZE][IMAGE_SIZE])
  **/
 void color(int image[IMAGE_SIZE][IMAGE_SIZE])
 {
-    // insert your code for task 1.1 here
-
     /**
      * This is an array equivalent to the input image
      * but will have the label connected components
@@ -119,8 +177,8 @@ void color(int image[IMAGE_SIZE][IMAGE_SIZE])
         {
             if (image[i][j] && !connected[i][j])
             {
-                /*boolean statement to check if surrounding 
-                coordinates have already been labelled*/
+                // boolean statement to check if surrounding
+                // coordinates have already been labelled*
                 int notSurrounded = 0;
 
                 /*check every direction surrounding to current coordinate*/
@@ -131,29 +189,26 @@ void color(int image[IMAGE_SIZE][IMAGE_SIZE])
                     int aroundX = i + xDir[d];
                     int aroundY = j + yDir[d];
 
-                    // if the surrounding coordinate is out of bounds, go to next
-                    // surrounding coordinate
-                    if (aroundX < 0 || aroundX > IMAGE_SIZE - 1)
-                        continue;
-                    if (aroundY < 0 || aroundY > IMAGE_SIZE - 1)
-                        continue;
-
-                    // if this is coordinate is in the grid and has a non zero value
-                    // this means this is a labelled component
-                    notSurrounded = notSurrounded || connected[aroundX][aroundY];
-
-                    // if the respective neighbour in the labelled array is
-                    // already labelled, let them share the same label
-                    // else if all the neighbours are 0 and the equivalent coordinate
-                    // is labelled, let this component in the labelled array signify
-                    // a new connected component
-                    if (connected[aroundX][aroundY])
+                    // if neighbour is a valid coordinate
+                    if (validCoor(aroundX, aroundY))
                     {
-                        connected[i][j] = connected[aroundX][aroundY];
-                        d = 7; // get out of loop
+                        // if this is coordinate is in the grid and has a non zero value
+                        // this means this is a labelled component
+                        notSurrounded = notSurrounded || connected[aroundX][aroundY];
+
+                        // if the respective neighbour in the labelled array is
+                        // already labelled, let them share the same label
+                        // else if all the neighbours are 0 and the equivalent coordinate
+                        // is labelled, let this component in the labelled array signify
+                        // a new connected component
+                        if (connected[aroundX][aroundY])
+                        {
+                            connected[i][j] = connected[aroundX][aroundY];
+                            d = 7; // get out of loop
+                        }
+                        else if (notSurrounded == 0 && d == 6)
+                            connected[i][j] = ++componentLabel;
                     }
-                    else if (notSurrounded == 0 && d == 6)
-                        connected[i][j] = ++componentLabel;
                 }
             }
         }
@@ -180,14 +235,12 @@ void color(int image[IMAGE_SIZE][IMAGE_SIZE])
                     int aroundX = y + xDir[d];
                     int aroundY = z + yDir[d];
 
-                    if (aroundX < 0 || aroundX > IMAGE_SIZE - 1)
-                        continue;
-                    if (aroundY < 0 || aroundY > IMAGE_SIZE - 1)
-                        continue;
-
-                    // if neighbours are different, change the neighbours to be the same
-                    if (connected[aroundX][aroundY] && (connected[y][z] != connected[aroundX][aroundY]))
-                        connected[aroundX][aroundY] = connected[y][z];
+                    if (validCoor(aroundX, aroundY))
+                    {
+                        // if neighbours are different, change the neighbours to be the same
+                        if (connected[aroundX][aroundY] && (connected[y][z] != connected[aroundX][aroundY]))
+                            connected[aroundX][aroundY] = connected[y][z];
+                    }
                 }
             }
         }
@@ -203,64 +256,129 @@ void color(int image[IMAGE_SIZE][IMAGE_SIZE])
 }
 
 /********************************************************************************/
+void connectPtr(int *x, int *y, int *componentLabel, int *image, int *connectedPtr)
+{
+}
+
 // the function and all the helper functions (if any) should use pointer notation,
 // instead of array index notation []. It is okey to use [] only when declaring extra arrays
 void colorPtr(int *image)
 {
-    // insert your code for task 2.1 here
 }
 
-// the function and all the helper functions (if any) should use pointer notation,
-// instead of array index notation []. It is okey to use [] only when declaring extra arrays
+/**
+ * POINTER VERSION
+ * 
+ * A 'boolean' helper method that calculates if the 
+ * neighbouring coordinate we want to check is in 
+ * the array
+ * 
+ * int x - the neighbouring x coordinate
+ * int y - the neighbouring y coordinate
+ * 
+ * Return 1 if x and y can be located in the grid,
+ * else, return 0 
+ */
+int validCoorPtr(int *x, int *y)
+{
+    return (*x >= 0 && *x < IMAGE_SIZE && *y >= 0 && *y < IMAGE_SIZE);
+}
+
+/**
+ * POINTER VERSION
+ * 
+ * A helper method that marks all the connected components of a label
+ * If a non zero number in the input array is found, it will recursively 
+ * mark all the neighbours of the component in the visited array. This will
+ * tell us not to increment the count because its component was already 
+ * accounted for
+ * 
+ * int image[][] - the input array
+ * int i - the x coordinate we are checking
+ * int y - the y coordiante we are checking
+ * int visited[][] - the array keeping track of the coordinates that have
+ *                   already been seen/ don't need to check
+ */
+void markNeighboursPtr(int *image, int *i, int *j, int *visited)
+{
+    int iVal = *i;
+    int jVal = *j;
+
+    if (!validCoorPtr(&iVal, &jVal)) // return this is not a valid coordinate
+        return;
+
+    if (*((visited + iVal * IMAGE_SIZE) + jVal)) // return if we already checked this coordinates connectivity
+        return;
+
+    *((visited + iVal * IMAGE_SIZE) + jVal) = 1; // let this coordinate be marked as seen
+
+    int aroundX; // neighbouring X
+    int aroundY; // neighbouring Y
+
+    // recursively check the surrounding coordinate in all directions
+    int d;
+    for (d = 0; d < 8; ++d)
+    {
+        // since the direction arrays are parallel, this is possible
+        aroundX = iVal + xDir[d];
+        aroundY = jVal + yDir[d];
+
+        int imageCoorisLabelled = *((image + aroundX * IMAGE_SIZE) + aroundY);
+        int visitedCoorisLabelled = *((visited + aroundX * IMAGE_SIZE) + aroundY);
+
+        // if the neighbouring coordinate is valid and that coordinated is labelled in the input array
+        // but not the visited array, mark it in the label array and check that point's neighbours
+        if (validCoorPtr(&aroundX, &aroundY) && (imageCoorisLabelled && !visitedCoorisLabelled))
+            markNeighboursPtr(image, &aroundX, &aroundY, visited);
+    }
+}
+
+/**
+ * POINTER VERSION
+ * 
+ * Returns the number of distinct cells 
+ * in the given matrix
+ * 
+ * int *image - the matrix
+ * 
+ * Assuming, *image is already labelled
+ **/
 int cellCountPtr(int *image)
 {
-    // insert your code for task 2.2 here
-    return 0;
+    int count = 0; // the number of distinct cells
+
+    // an array that will hold non zero vales, to ensure we don't increment our count
+    // on an already visited coordinate
+    int visited[IMAGE_SIZE][IMAGE_SIZE] = {0};
+    int *visitedPtr = visited;
+
+    int i, j;
+    int currImageCoor, currVisitedCoor;
+    for (i = 0; i < IMAGE_SIZE; ++i)
+    {
+        for (j = 0; j < IMAGE_SIZE; ++j)
+        {   
+            currImageCoor = *((image + i * IMAGE_SIZE) + j);
+            currVisitedCoor = *((visitedPtr + i * IMAGE_SIZE) + j);
+            
+            if (currImageCoor && !currVisitedCoor)
+            {
+                markNeighboursPtr(image, &i, &j, visitedPtr);
+                ++count;
+            }
+        }
+    }
+    return count;
 }
 
 /********************************************************************************/
-
-/**
- * This function colors each cell with a unique color
- * (i.e., unique number).
- **/
-int colorRecursively(int image[IMAGE_SIZE][IMAGE_SIZE])
-{
-    int componentLabel = 0; // component labelling
-
-    int i, j;
-    for (i = 0; i < IMAGE_SIZE; i++)
-    {
-        for (j = 0; j < IMAGE_SIZE; j++)
-        {
-            /**
-	         * Check ever value in the original array,
-	         * if the original array has a non-zero, and the copy array
-	         * at the same position has a 0, turn that position in 
-	         * the array to the value in the original array
-	         */
-            if (image[i][j] && !connectedR[i][j])
-                connect(i, j, ++componentLabel, image);
-        }
-    }
-
-    // make the original array, into the labelled array
-    int m, n;
-    for (m = 0; m < IMAGE_SIZE; m++)
-    {
-        for (n = 0; n < IMAGE_SIZE; n++)
-            image[m][n] = connectedR[m][n];
-    }
-
-    return 0;
-}
 
 /**
  * A recursive helper method that checks the current coordinate's
  * neighbours, and than decides the connected component value 
  * based off the neighbours
  */
-void connect(int x, int y, int componentLabel, int image[IMAGE_SIZE][IMAGE_SIZE])
+void connect(int x, int y, int componentLabel, int image[IMAGE_SIZE][IMAGE_SIZE], int connectedR[IMAGE_SIZE][IMAGE_SIZE])
 {
 
     /**
@@ -269,9 +387,7 @@ void connect(int x, int y, int componentLabel, int image[IMAGE_SIZE][IMAGE_SIZE]
      *  West, North West, and North East coordinates of the first 
      *  index of the array because they do not exist
      */
-    if (x < 0 || x > IMAGE_SIZE - 1)
-        return;
-    if (y < 0 || y > IMAGE_SIZE - 1)
+    if (!validCoor(x, y))
         return;
 
     // mark the current index in the copy array
@@ -289,8 +405,45 @@ void connect(int x, int y, int componentLabel, int image[IMAGE_SIZE][IMAGE_SIZE]
         // if the respective neighbour in the original array is labelled
         // the same neighbour is not labelled in the copy array
         if (image[aroundX][aroundY] && !connectedR[aroundX][aroundY])
-            connect(aroundX, aroundY, componentLabel, image);
+            connect(aroundX, aroundY, componentLabel, image, connectedR);
     }
+}
+
+/**
+ * This function colors each cell with a unique color
+ * (i.e., unique number).
+ **/
+int colorRecursively(int image[IMAGE_SIZE][IMAGE_SIZE])
+{
+    int connectedR[IMAGE_SIZE][IMAGE_SIZE] = {0};
+
+    int componentLabel = 0; // component labelling
+
+    int i, j;
+    for (i = 0; i < IMAGE_SIZE; i++)
+    {
+        for (j = 0; j < IMAGE_SIZE; j++)
+        {
+            /**
+	         * Check ever value in the original array,
+	         * if the original array has a non-zero, and the copy array
+	         * at the same position has a 0, turn that position in 
+	         * the array to the value in the original array
+	         */
+            if (image[i][j] && !connectedR[i][j])
+                connect(i, j, ++componentLabel, image, connectedR);
+        }
+    }
+
+    // make the original array, into the labelled array
+    int m, n;
+    for (m = 0; m < IMAGE_SIZE; m++)
+    {
+        for (n = 0; n < IMAGE_SIZE; n++)
+            image[m][n] = connectedR[m][n];
+    }
+
+    return 0;
 }
 
 #ifndef __testing
