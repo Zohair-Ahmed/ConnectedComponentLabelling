@@ -43,8 +43,6 @@ int yDir[8] = {-1, -1, 0, 1, 1, 1, 0, -1};
 /*------------------------FUNCTIONS------------------------*/
 
 /**
- * NON-POINTER VERSION
- * 
  * This function prints the input array
  * 
  * int array[][] - array to be printed
@@ -62,7 +60,10 @@ void printImgArray(int array[IMAGE_SIZE][IMAGE_SIZE])
     printf("-----------------------------\n");
 }
 
+// TASK 1.2  //
 /**
+ * NON-POINTER VERSION
+ * 
  * A 'boolean' helper method that calculates if the 
  * neighbouring coordinate we want to check is in 
  * the array
@@ -79,6 +80,8 @@ int validCoor(int x, int y)
 }
 
 /**
+ * NON-POINTER VERSION
+ * 
  * A helper method that marks all the connected components of a label
  * If a non zero number in the input array is found, it will recursively 
  * mark all the neighbours of the component in the visited array. This will
@@ -120,6 +123,8 @@ void markNeighbours(int image[IMAGE_SIZE][IMAGE_SIZE], int i, int j, int visited
 }
 
 /**
+ * NON-POINTER VERSION
+ * 
  * Returns the number of distinct cells 
  * in the given matrix
  * 
@@ -150,13 +155,14 @@ int cellCount(int image[IMAGE_SIZE][IMAGE_SIZE])
     return count;
 }
 
+// TASK 1.1  //
 /**
+ * NON-POINTER VERSION
+ * 
  * This function colors each blood cell with a unique color
  * (i.e. unique number)
- * Hint: scan the array element by element, and explore each element as much as possible, 
- * when come to an already labelled one, relabell the array to form larger cell
  * 
- * feel free to add auxiliary data structures and helper functions
+ * int image[][] - input matrix
  **/
 void color(int image[IMAGE_SIZE][IMAGE_SIZE])
 {
@@ -168,8 +174,9 @@ void color(int image[IMAGE_SIZE][IMAGE_SIZE])
 
     int componentLabel = 0; // component labelling
 
-    /*******FIRST PASS**********/
-
+    /**********FIRST PASS************
+     * This pass will find and label all the connected components 
+    */
     int i, j;
     for (i = 0; i < IMAGE_SIZE; i++)
     {
@@ -177,22 +184,23 @@ void color(int image[IMAGE_SIZE][IMAGE_SIZE])
         {
             if (image[i][j] && !connected[i][j])
             {
+                connected[i][j] = componentLabel;
+
                 // boolean statement to check if surrounding
-                // coordinates have already been labelled*
+                // coordinates have already been labelled
                 int notSurrounded = 0;
 
-                /*check every direction surrounding to current coordinate*/
+                // check every direction surrounding to current coordinate
                 int d;
                 for (d = 0; d < 8; ++d)
                 {
-                    // since the direction arrays are parallel, this is possible
                     int aroundX = i + xDir[d];
                     int aroundY = j + yDir[d];
 
                     // if neighbour is a valid coordinate
                     if (validCoor(aroundX, aroundY))
                     {
-                        // if this is coordinate is in the grid and has a non zero value
+                        // if this coordinate is in the grid and has a non zero value
                         // this means this is a labelled component
                         notSurrounded = notSurrounded || connected[aroundX][aroundY];
 
@@ -256,16 +264,136 @@ void color(int image[IMAGE_SIZE][IMAGE_SIZE])
 }
 
 /********************************************************************************/
-void connectPtr(int *x, int *y, int *componentLabel, int *image, int *connectedPtr)
-{
-}
-
-// the function and all the helper functions (if any) should use pointer notation,
-// instead of array index notation []. It is okey to use [] only when declaring extra arrays
+// TASK 2.1  //
+/**
+ * POINTER VERSION
+ * 
+ * This function colors each blood cell with a unique color
+ * (i.e. unique number)
+ * 
+ * int image[][] - input matrix
+ **/
 void colorPtr(int *image)
 {
+    /**
+     * This is an array equivalent to the input image
+     * but will have the label connected components
+     */
+    int connected[IMAGE_SIZE][IMAGE_SIZE] = {0};
+    int *connectedPtr = connected; // pointer to connected array
+
+    int componentLabel = 0; // component labelling
+
+    int currImageCoor; // current image coordinate
+    int currConnectedCoor; // current connected coordinate
+    int surroundConnectedCoor; // the neighbouring coordinate of connected
+    
+    int *xDirPtr = xDir; // pointer to xDir values
+    int *yDirPtr = yDir; // pointer to yDir values
+
+    /**********FIRST PASS************
+     * This pass will find and label all the connected components 
+    */
+    int i, j;
+    for (i = 0; i < IMAGE_SIZE; i++)
+    {
+        for (j = 0; j < IMAGE_SIZE; j++)
+        {
+            currImageCoor = *((image + i * IMAGE_SIZE) + j);
+            currConnectedCoor = *((connectedPtr + i * IMAGE_SIZE) + j);
+            
+            if (*((image + i * IMAGE_SIZE) + j) && !*((connectedPtr + i * IMAGE_SIZE) + j))
+            {
+                *((connectedPtr + i * IMAGE_SIZE) + j) = componentLabel;
+
+                // boolean statement to check if surrounding
+                // coordinates have already been labelled
+                int notSurrounded = 0;
+
+                // check every direction surrounding to current coordinate
+                int d;
+                for (d = 0; d < 8; ++d)
+                {
+                    int aroundX = i + *(xDirPtr + d);
+                    int aroundY = j + *(yDirPtr + d);
+
+                    // if neighbour is a valid coordinate
+                    if (validCoor(i + *(xDirPtr + d), j + *(yDirPtr + d)))
+                    {
+                        surroundConnectedCoor = *((connectedPtr + aroundX * IMAGE_SIZE) + aroundY);
+                        
+                        // if this coordinate is in the grid and has a non zero value
+                        // this means this is a labelled component
+                        notSurrounded = notSurrounded || *((connectedPtr + aroundX * IMAGE_SIZE) + aroundY);
+
+                        // if the respective neighbour in the labelled array is
+                        // already labelled, let them share the same label
+                        // else if all the neighbours are 0 and the equivalent coordinate
+                        // is labelled, let this component in the labelled array signify
+                        // a new connected component
+                        if (*((connectedPtr + aroundX * IMAGE_SIZE) + aroundY))
+                        {
+                            *((connectedPtr + i * IMAGE_SIZE) + j) = *((connectedPtr + aroundX * IMAGE_SIZE) + aroundY);
+                            d = 7; // get out of loop
+                        }
+                        else if (!*((connectedPtr + aroundX * IMAGE_SIZE) + aroundY) && d == 6)
+                        {
+                            //componentLabel += 1;
+                            *((connectedPtr + i * IMAGE_SIZE) + j) = ++componentLabel;
+                        }
+                            
+                    }
+                }
+            }
+        }
+    }
+
+    /*******SECOND PASS*********
+     * A second pass is done ensure none of the connected components were missed
+     * Since the input array is read from top right to bottom left, there could
+     * be connected components that do not seem connected in the beginning, but connect
+     * later on in the array
+    */
+    int y, z;
+    for (y = IMAGE_SIZE - 1; y >= 0; y--)
+    {
+        for (z = 0; z < IMAGE_SIZE; z++)
+        {
+            currConnectedCoor = *((connectedPtr + y * IMAGE_SIZE) + z);
+            
+            // if this is a non zero component
+            if (*((connectedPtr + y * IMAGE_SIZE) + z))
+            {
+                // check all surrounding neighbours
+                int d;
+                for (d = 0; d < 8; ++d)
+                {
+                    int aroundX = y + *(xDirPtr + d);
+                    int aroundY = z + *(yDirPtr + d);
+
+                    surroundConnectedCoor = *((connectedPtr + aroundX * IMAGE_SIZE) + aroundY);
+
+                    if (validCoor(y + *(xDirPtr + d), z + *(yDirPtr + d)))
+                    {
+                        // if neighbours are different, change the neighbours to be the same
+                        if (*((connectedPtr + aroundX * IMAGE_SIZE) + aroundY) && (*((connectedPtr + y * IMAGE_SIZE) + z) != *((connectedPtr + aroundX * IMAGE_SIZE) + aroundY)))
+                            *((connectedPtr + aroundX * IMAGE_SIZE) + aroundY) = *((connectedPtr + y * IMAGE_SIZE) + z);
+                    }
+                }
+            }
+        }
+    }
+
+    // make the original array, into the labelled array
+    int m, p;
+    for (m = 0; m < IMAGE_SIZE; m++)
+    {
+        for (p = 0; p < IMAGE_SIZE; p++)
+            *((image + m * IMAGE_SIZE) + p) = *((connectedPtr + m * IMAGE_SIZE) + p);
+    }
 }
 
+// TASK 2.2  //
 /**
  * POINTER VERSION
  * 
@@ -303,6 +431,8 @@ void markNeighboursPtr(int *image, int *i, int *j, int *visited)
 {
     int iVal = *i;
     int jVal = *j;
+
+    //int currVisitedCoor = *((visited + iVal * IMAGE_SIZE) + jVal);
 
     if (!validCoorPtr(&iVal, &jVal)) // return this is not a valid coordinate
         return;
@@ -357,10 +487,10 @@ int cellCountPtr(int *image)
     for (i = 0; i < IMAGE_SIZE; ++i)
     {
         for (j = 0; j < IMAGE_SIZE; ++j)
-        {   
+        {
             currImageCoor = *((image + i * IMAGE_SIZE) + j);
             currVisitedCoor = *((visitedPtr + i * IMAGE_SIZE) + j);
-            
+
             if (currImageCoor && !currVisitedCoor)
             {
                 markNeighboursPtr(image, &i, &j, visitedPtr);
@@ -373,10 +503,17 @@ int cellCountPtr(int *image)
 
 /********************************************************************************/
 
+// BONUS  //
 /**
  * A recursive helper method that checks the current coordinate's
  * neighbours, and than decides the connected component value 
  * based off the neighbours
+ * 
+ * int x - x coordinate
+ * int y - y coordinate
+ * int componentLabel - current label
+ * int image[][] - input array
+ * int connectedR[][] - image equivalent but with labels
  */
 void connect(int x, int y, int componentLabel, int image[IMAGE_SIZE][IMAGE_SIZE], int connectedR[IMAGE_SIZE][IMAGE_SIZE])
 {
@@ -397,8 +534,6 @@ void connect(int x, int y, int componentLabel, int image[IMAGE_SIZE][IMAGE_SIZE]
     int d;
     for (d = 0; d < 8; ++d)
     {
-
-        // since the direction arrays are parallel, this is possible
         int aroundX = x + xDir[d];
         int aroundY = y + yDir[d];
 
@@ -412,6 +547,8 @@ void connect(int x, int y, int componentLabel, int image[IMAGE_SIZE][IMAGE_SIZE]
 /**
  * This function colors each cell with a unique color
  * (i.e., unique number).
+ * 
+ * int image[][] - input matrix
  **/
 int colorRecursively(int image[IMAGE_SIZE][IMAGE_SIZE])
 {
@@ -446,6 +583,7 @@ int colorRecursively(int image[IMAGE_SIZE][IMAGE_SIZE])
     return 0;
 }
 
+// TESTING  //
 #ifndef __testing
 int main()
 {
