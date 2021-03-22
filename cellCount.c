@@ -90,7 +90,7 @@ int validCoor(int x, int y)
  * 
  * int image[][] - the input array
  * int i - the x coordinate we are checking
- * int y - the y coordiante we are checking
+ * int j - the y coordinate we are checking
  * int visited[][] - the array keeping track of the coordinates that have
  *                   already been seen/ don't need to check
  */
@@ -174,6 +174,8 @@ void color(int image[IMAGE_SIZE][IMAGE_SIZE])
 
     int componentLabel = 0; // component labelling
 
+    int aroundX, aroundY; // the neighbouring coordinates
+
     /**********FIRST PASS************
      * This pass will find and label all the connected components 
     */
@@ -194,8 +196,8 @@ void color(int image[IMAGE_SIZE][IMAGE_SIZE])
                 int d;
                 for (d = 0; d < 8; ++d)
                 {
-                    int aroundX = i + xDir[d];
-                    int aroundY = j + yDir[d];
+                    aroundX = i + xDir[d];
+                    aroundY = j + yDir[d];
 
                     // if neighbour is a valid coordinate
                     if (validCoor(aroundX, aroundY))
@@ -240,8 +242,8 @@ void color(int image[IMAGE_SIZE][IMAGE_SIZE])
                 int d;
                 for (d = 0; d < 8; ++d)
                 {
-                    int aroundX = y + xDir[d];
-                    int aroundY = z + yDir[d];
+                    aroundX = y + xDir[d];
+                    aroundY = z + yDir[d];
 
                     if (validCoor(aroundX, aroundY))
                     {
@@ -268,6 +270,8 @@ void color(int image[IMAGE_SIZE][IMAGE_SIZE])
 /**
  * POINTER VERSION
  * 
+ * Same algorithm as above, but with pointers and no index
+ * 
  * This function colors each blood cell with a unique color
  * (i.e. unique number)
  * 
@@ -284,10 +288,12 @@ void colorPtr(int *image)
 
     int componentLabel = 0; // component labelling
 
-    int currImageCoor; // current image coordinate
-    int currConnectedCoor; // current connected coordinate
+    int currImageCoor;         // current image coordinate
+    int currConnectedCoor;     // current connected coordinate
     int surroundConnectedCoor; // the neighbouring coordinate of connected
-    
+
+    int aroundX, aroundY; // the neighbouring coordinates
+
     int *xDirPtr = xDir; // pointer to xDir values
     int *yDirPtr = yDir; // pointer to yDir values
 
@@ -301,8 +307,8 @@ void colorPtr(int *image)
         {
             currImageCoor = *((image + i * IMAGE_SIZE) + j);
             currConnectedCoor = *((connectedPtr + i * IMAGE_SIZE) + j);
-            
-            if (*((image + i * IMAGE_SIZE) + j) && !*((connectedPtr + i * IMAGE_SIZE) + j))
+
+            if (currImageCoor && !currConnectedCoor)
             {
                 *((connectedPtr + i * IMAGE_SIZE) + j) = componentLabel;
 
@@ -314,14 +320,14 @@ void colorPtr(int *image)
                 int d;
                 for (d = 0; d < 8; ++d)
                 {
-                    int aroundX = i + *(xDirPtr + d);
-                    int aroundY = j + *(yDirPtr + d);
+                    aroundX = i + *(xDirPtr + d);
+                    aroundY = j + *(yDirPtr + d);
 
                     // if neighbour is a valid coordinate
-                    if (validCoor(i + *(xDirPtr + d), j + *(yDirPtr + d)))
+                    if (validCoor(aroundX, aroundY))
                     {
                         surroundConnectedCoor = *((connectedPtr + aroundX * IMAGE_SIZE) + aroundY);
-                        
+
                         // if this coordinate is in the grid and has a non zero value
                         // this means this is a labelled component
                         notSurrounded = notSurrounded || *((connectedPtr + aroundX * IMAGE_SIZE) + aroundY);
@@ -331,17 +337,13 @@ void colorPtr(int *image)
                         // else if all the neighbours are 0 and the equivalent coordinate
                         // is labelled, let this component in the labelled array signify
                         // a new connected component
-                        if (*((connectedPtr + aroundX * IMAGE_SIZE) + aroundY))
+                        if (surroundConnectedCoor)
                         {
-                            *((connectedPtr + i * IMAGE_SIZE) + j) = *((connectedPtr + aroundX * IMAGE_SIZE) + aroundY);
+                            *((connectedPtr + i * IMAGE_SIZE) + j) = surroundConnectedCoor;
                             d = 7; // get out of loop
                         }
-                        else if (!*((connectedPtr + aroundX * IMAGE_SIZE) + aroundY) && d == 6)
-                        {
-                            //componentLabel += 1;
+                        else if (!surroundConnectedCoor && d == 6)
                             *((connectedPtr + i * IMAGE_SIZE) + j) = ++componentLabel;
-                        }
-                            
                     }
                 }
             }
@@ -360,24 +362,24 @@ void colorPtr(int *image)
         for (z = 0; z < IMAGE_SIZE; z++)
         {
             currConnectedCoor = *((connectedPtr + y * IMAGE_SIZE) + z);
-            
+
             // if this is a non zero component
-            if (*((connectedPtr + y * IMAGE_SIZE) + z))
+            if (currConnectedCoor)
             {
                 // check all surrounding neighbours
                 int d;
                 for (d = 0; d < 8; ++d)
                 {
-                    int aroundX = y + *(xDirPtr + d);
-                    int aroundY = z + *(yDirPtr + d);
+                    aroundX = y + *(xDirPtr + d);
+                    aroundY = z + *(yDirPtr + d);
 
                     surroundConnectedCoor = *((connectedPtr + aroundX * IMAGE_SIZE) + aroundY);
 
-                    if (validCoor(y + *(xDirPtr + d), z + *(yDirPtr + d)))
+                    if (validCoor(aroundX, aroundY))
                     {
                         // if neighbours are different, change the neighbours to be the same
-                        if (*((connectedPtr + aroundX * IMAGE_SIZE) + aroundY) && (*((connectedPtr + y * IMAGE_SIZE) + z) != *((connectedPtr + aroundX * IMAGE_SIZE) + aroundY)))
-                            *((connectedPtr + aroundX * IMAGE_SIZE) + aroundY) = *((connectedPtr + y * IMAGE_SIZE) + z);
+                        if (surroundConnectedCoor && (currConnectedCoor != surroundConnectedCoor))
+                            *((connectedPtr + aroundX * IMAGE_SIZE) + aroundY) = currConnectedCoor;
                     }
                 }
             }
@@ -389,7 +391,10 @@ void colorPtr(int *image)
     for (m = 0; m < IMAGE_SIZE; m++)
     {
         for (p = 0; p < IMAGE_SIZE; p++)
-            *((image + m * IMAGE_SIZE) + p) = *((connectedPtr + m * IMAGE_SIZE) + p);
+        {
+            currConnectedCoor = *((connectedPtr + m * IMAGE_SIZE) + p);
+            *((image + m * IMAGE_SIZE) + p) = currConnectedCoor;
+        }
     }
 }
 
@@ -432,12 +437,12 @@ void markNeighboursPtr(int *image, int *i, int *j, int *visited)
     int iVal = *i;
     int jVal = *j;
 
-    //int currVisitedCoor = *((visited + iVal * IMAGE_SIZE) + jVal);
+    int currVisitedCoor = *((visited + iVal * IMAGE_SIZE) + jVal);
 
     if (!validCoorPtr(&iVal, &jVal)) // return this is not a valid coordinate
         return;
 
-    if (*((visited + iVal * IMAGE_SIZE) + jVal)) // return if we already checked this coordinates connectivity
+    if (currVisitedCoor) // return if we already checked this coordinates connectivity
         return;
 
     *((visited + iVal * IMAGE_SIZE) + jVal) = 1; // let this coordinate be marked as seen
@@ -518,6 +523,8 @@ int cellCountPtr(int *image)
 void connect(int x, int y, int componentLabel, int image[IMAGE_SIZE][IMAGE_SIZE], int connectedR[IMAGE_SIZE][IMAGE_SIZE])
 {
 
+    int aroundX, aroundY;
+    
     /**
      *  Checks if the surround coordinates of the current index 
      *  is out of bounds. For example, will not compute the North,
@@ -534,8 +541,8 @@ void connect(int x, int y, int componentLabel, int image[IMAGE_SIZE][IMAGE_SIZE]
     int d;
     for (d = 0; d < 8; ++d)
     {
-        int aroundX = x + xDir[d];
-        int aroundY = y + yDir[d];
+        aroundX = x + xDir[d];
+        aroundY = y + yDir[d];
 
         // if the respective neighbour in the original array is labelled
         // the same neighbour is not labelled in the copy array
