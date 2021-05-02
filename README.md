@@ -1,8 +1,11 @@
 # ConnectedComponentLabelling
 Finding the connected components in a 2D-array (8-connected-neighborhood)
 
-Mar 16 - Finished Task 1.1
+For example:
 
-Mar 17 - Redoing Task 1.1 to be non recurive, recursively it is done, need to fix global variables
-
-Mar 21 - Finished
+Input:                   Output:
+0 1 1 0 0                0 1 1 0 0
+0 0 0 0 0                0 0 0 0 0
+0 0 0 1 1                0 0 0 2 2
+1 0 0 1 0                3 0 0 2 0
+1 0 1 0 1                3 0 2 0 2
